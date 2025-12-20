@@ -1,0 +1,86 @@
+# Fire Detection Training Configuration
+
+# Model Configuration
+model:
+  name: "fire_yolov8"
+  size: "n"  # nano, small, medium, large, xlarge
+  num_classes: 2
+  pretrained: true
+
+# Training Configuration  
+training:
+  epochs: 150
+  batch_size: 16
+  img_size: 640
+  device: "auto"  # auto, cuda, cpu
+  workers: 4
+  lr0: 0.01
+  lrf: 0.1  # final lr = lr0 * lrf
+  momentum: 0.937
+  weight_decay: 0.0005
+  warmup_epochs: 3
+  warmup_momentum: 0.8
+  warmup_bias_lr: 0.1
+  cos_lr: true
+  
+# Augmentation Configuration
+augmentation:
+  mosaic: 1.0  # probability
+  mosaic_stop_epoch: 130  # stop mosaic after this epoch
+  mixup: 0.0  # disabled for smoke stability
+  copy_paste: 0.3  # for fire patches
+  hsv_h: 0.015  # hue
+  hsv_s: 0.7   # saturation  
+  hsv_v: 0.4   # value
+  degrees: 0.0 # rotation
+  translate: 0.1
+  scale: 0.5
+  shear: 0.0
+  perspective: 0.0
+  flipud: 0.0  # vertical flip
+  fliplr: 0.5  # horizontal flip
+  
+# Loss Configuration
+loss:
+  box_gain: 0.05
+  cls_gain: 0.5
+  dfl_gain: 1.5
+  pose_gain: 12.0
+  kobj_gain: 1.0
+  label_smoothing: 0.0
+  nbs: 64  # nominal batch size
+  
+# Data Configuration
+data:
+  path: "data/processed/fire_yolo"
+  train: "images/train"
+  val: "images/val"
+  test: "images/test"
+  names:
+    0: "fire"
+    1: "smoke"
+
+# Class weights for imbalanced datasets
+class_weights:
+  fire: 1.0
+  smoke: 1.5  # higher weight for rarer smoke class
+
+# Fusion Configuration (for late-fusion mode)
+fusion:
+  enabled: false
+  thermal_model_size: "n"
+  fusion_weights:
+    fire: 1.0
+    smoke: 0.7
+
+# Evaluation Configuration  
+evaluation:
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  max_detections: 300
+  
+# Paths
+paths:
+  save_dir: "models/fire/runs"
+  log_dir: "models/fire/logs"
+  tensorboard_dir: "models/fire/tensorboard"

@@ -1,0 +1,9 @@
+name: guira-core-ci
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint Python
+        run: echo "Add lint steps"

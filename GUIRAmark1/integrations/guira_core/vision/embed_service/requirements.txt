@@ -1,0 +1,24 @@
+# Core dependencies
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+pydantic>=2.0.0
+
+# Deep learning
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+
+# Image processing
+pillow>=9.5.0
+numpy>=1.24.0
+
+# Storage backends
+minio>=7.1.0
+azure-storage-blob>=12.17.0
+
+# Optional: ONNX export for edge deployment
+onnx>=1.14.0
+onnxruntime-gpu>=1.15.0
+
+# Utilities
+python-multipart>=0.0.6

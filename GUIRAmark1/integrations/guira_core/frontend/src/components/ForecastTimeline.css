@@ -1,0 +1,149 @@
+.forecast-timeline {
+  padding: 1.5rem 2rem;
+  background-color: white;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.timeline-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.timeline-info {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.time-display,
+.step-display {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.play-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: #667eea;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.play-button:hover:not(:disabled) {
+  background-color: #5568d3;
+}
+
+.play-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.slider-container {
+  flex: 1;
+}
+
+.timeline-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #ffeda0, #feb24c, #fd8d3c, #fc4e2a, #e31a1c);
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.tick-label {
+  font-size: 0.75rem;
+  color: #999;
+  font-family: 'Courier New', monospace;
+}
+
+.timeline-legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.legend-color {
+  width: 20px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .forecast-timeline {
+    padding: 1rem;
+  }
+
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .timeline-legend {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,288 @@
+name: 🔒 License Enforcement & CLA Verification
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened, synchronize]
+  fork:
+  watch:
+    types: [started]
+
+env:
+  REPO_OWNER: "[Your Full Legal Name]"
+  CONTACT_EMAIL: "[your-email@domain.com]"
+  LEGAL_EMAIL: "[legal-email@domain.com]"
+
+jobs:
+  license-enforcement:
+    name: 🚨 License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📋 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 🔍 Check CLA Status
+        id: cla-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const contributor = context.actor;
+            const validContributors = JSON.parse(process.env.APPROVED_CONTRIBUTORS || '[]');
+            
+            const isApproved = validContributors.includes(contributor);
+            core.setOutput('approved', isApproved);
+            core.setOutput('contributor', contributor);
+            
+            if (!isApproved) {
+              core.warning(`Contributor ${contributor} has not signed CLA`);
+            }
+        env:
+          APPROVED_CONTRIBUTORS: ${{ secrets.APPROVED_CONTRIBUTORS }}
+          
+      - name: 🚫 Block Unapproved Contributions
+        if: steps.cla-check.outputs.approved != 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const contributor = '${{ steps.cla-check.outputs.contributor }}';
+            
+            const comment = `## 🚨 CLA REQUIRED - CONTRIBUTION BLOCKED
+
+@${contributor}, your contribution cannot be accepted until you complete the legal compliance process.
+
+### ⚠️ REQUIRED STEPS:
+
+1. **📖 READ**: [PROPRIETARY_LICENSE.md](./PROPRIETARY_LICENSE.md) completely
+2. **✍️ SIGN**: [CLA.md](./CLA.md) with witness present  
+3. **📧 EMAIL**: Signed CLA to ${process.env.CONTACT_EMAIL}
+4. **⏳ WAIT**: For written approval (2-5 business days)
+5. **✅ CONFIRM**: CLA approval before resubmitting
+
+### 🔒 LEGAL NOTICE:
+By contributing, you **PERMANENTLY TRANSFER ALL RIGHTS** to your work to ${process.env.REPO_OWNER}.
+
+**NO CONTRIBUTIONS ACCEPTED WITHOUT SIGNED CLA.**
+
+---
+*This is an automated message. Contact ${process.env.LEGAL_EMAIL} for questions.*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+            
+            // Add blocking label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['🚫 CLA Required', '⚖️ Legal Block', '📋 Compliance']
+            });
+            
+            // Close PR until CLA is signed
+            if (context.payload.pull_request) {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                state: 'closed'
+              });
+            }
+
+      - name: ✅ Approve Verified Contributors
+        if: steps.cla-check.outputs.approved == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## ✅ CLA VERIFIED - CONTRIBUTION APPROVED
+
+@${{ steps.cla-check.outputs.contributor }}, your CLA status is verified. You may proceed with contributions.
+
+### 📋 REMINDER:
+- All contributions become property of ${process.env.REPO_OWNER}
+- No compensation or attribution guaranteed
+- Commercial use rights assigned to owner
+
+Thank you for contributing to the Fire Prevention System!
+
+---
+*Automated CLA verification system*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['✅ CLA Verified', '👍 Approved Contributor']
+            });
+
+  fork-notification:
+    name: 📢 Fork License Notification
+    runs-on: ubuntu-latest
+    if: github.event_name == 'fork'
+    
+    steps:
+      - name: 🔔 Notify Fork Owner
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const forker = context.payload.forkee.owner.login;
+            const forkName = context.payload.forkee.full_name;
+            
+            // Log fork for monitoring
+            console.log(`FORK ALERT: ${forker} forked to ${forkName}`);
+            
+            // Note: GitHub doesn't allow automated issues on external repos
+            // This would require separate monitoring system
+            
+  watch-notification:
+    name: ⭐ Star License Notification  
+    runs-on: ubuntu-latest
+    if: github.event_name == 'watch'
+    
+    steps:
+      - name: 📊 Log Star Activity
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const watcher = context.payload.sender.login;
+            console.log(`STAR ALERT: ${watcher} starred the repository`);
+            
+            // Could trigger external monitoring system here
+
+  issue-response:
+    name: 📝 Issue Auto-Response
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    
+    steps:
+      - name: 🤖 Add License Notice to Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## 🔒 PROPRIETARY SOFTWARE NOTICE
+
+Thank you for your interest in the Fire Prevention System!
+
+### ⚖️ LEGAL REMINDER:
+- This is **proprietary software** owned by ${process.env.REPO_OWNER}
+- **Commercial use is prohibited**
+- **Educational use only** without written permission
+- All contributions require signed CLA
+
+### 🤝 CONTRIBUTING:
+If you'd like to contribute:
+1. Read [PROPRIETARY_LICENSE.md](./PROPRIETARY_LICENSE.md)
+2. Sign [CLA.md](./CLA.md) 
+3. Email to ${process.env.CONTACT_EMAIL}
+4. Wait for approval
+
+### 📞 CONTACT:
+- Technical: ${process.env.CONTACT_EMAIL}
+- Legal: ${process.env.LEGAL_EMAIL}
+
+---
+*Automated response - thank you for your understanding!*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  violation-scan:
+    name: 🔍 License Violation Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 🔎 Scan for Code Similarities
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // This would integrate with external monitoring services
+            // to detect potential license violations
+            
+            const violations = [];
+            
+            // Placeholder for violation detection logic
+            // In practice, this would call external APIs to:
+            // - Scan GitHub for similar code
+            // - Check patent databases
+            // - Monitor commercial uses
+            // - Search for derivative works
+            
+            if (violations.length > 0) {
+              // Alert repository owner
+              console.log('VIOLATIONS DETECTED:', violations);
+              
+              // Create issue for manual review
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 POTENTIAL LICENSE VIOLATIONS DETECTED',
+                body: `Automated scan detected potential violations:\n\n${violations.map(v => `- ${v}`).join('\n')}`,
+                labels: ['🚨 Legal Alert', '🔍 Violation Scan']
+              });
+            }
+
+  cla-reminder:
+    name: 📅 CLA Renewal Reminders
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: 📧 Send CLA Renewal Notices
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check for contributors who need CLA renewal
+            // (if implementing time-based CLA renewal)
+            
+            const contributors = JSON.parse(process.env.APPROVED_CONTRIBUTORS || '[]');
+            
+            for (const contributor of contributors) {
+              // Check CLA expiration dates
+              // Send renewal reminders if needed
+              console.log(`Checking CLA status for ${contributor}`);
+            }
+        env:
+          APPROVED_CONTRIBUTORS: ${{ secrets.APPROVED_CONTRIBUTORS }}
+
+  update-copyright:
+    name: 📅 Update Copyright Years
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: 📋 Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: 🔄 Update Copyright Years
+        run: |
+          current_year=$(date +%Y)
+          
+          # Update copyright in license files
+          sed -i "s/Copyright (c) [0-9]\{4\}/Copyright (c) $current_year/g" PROPRIETARY_LICENSE.md
+          sed -i "s/Copyright (c) [0-9]\{4\}/Copyright (c) $current_year/g" CLA.md
+          sed -i "s/Copyright (c) [0-9]\{4\}/Copyright (c) $current_year/g" CONTRIBUTING.md
+          
+          # Update "Last Updated" dates
+          sed -i "s/Last Updated: [A-Za-z]* [0-9]*, [0-9]\{4\}/Last Updated: $(date +"%B %d, %Y")/g" PROPRIETARY_LICENSE.md
+          sed -i "s/Effective [A-Za-z]* [0-9]*, [0-9]\{4\}/Effective $(date +"%B %d, %Y")/g" CLA.md
+          
+      - name: 📤 Commit Updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: '📅 Auto-update copyright year and dates'
+          file_pattern: '*.md'

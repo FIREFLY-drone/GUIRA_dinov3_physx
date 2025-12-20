@@ -1,0 +1,94 @@
+# Triton Inference Server Model Configuration
+# for DINOv2 Base Model with TensorRT optimization
+
+name: "dinov2_base"
+platform: "onnxruntime_onnx"
+max_batch_size: 8
+default_model_filename: "dinov2_base.onnx"
+
+# Input specification
+input [
+  {
+    name: "pixel_values"
+    data_type: TYPE_FP32
+    dims: [3, 518, 518]
+  }
+]
+
+# Output specification
+output [
+  {
+    name: "last_hidden_state"
+    data_type: TYPE_FP32
+    dims: [-1, 768]  # [num_patches, embedding_dim]
+  }
+]
+
+# Dynamic batching for improved throughput
+dynamic_batching {
+  preferred_batch_size: [1, 2, 4, 8]
+  max_queue_delay_microseconds: 100
+}
+
+# Instance configuration
+instance_group [
+  {
+    count: 2  # Run 2 instances per GPU
+    kind: KIND_GPU
+    gpus: [0]  # Use GPU 0
+  }
+]
+
+# Optimization settings
+optimization {
+  # Enable CUDA graphs for reduced overhead
+  cuda {
+    graphs: true
+  }
+  
+  # Model execution accelerators
+  execution_accelerators {
+    gpu_execution_accelerator {
+      name: "tensorrt"
+      parameters {
+        key: "precision_mode"
+        value: "FP16"  # Use FP16 for 2x speedup
+      }
+      parameters {
+        key: "max_workspace_size_bytes"
+        value: "4294967296"  # 4GB workspace
+      }
+    }
+  }
+}
+
+# Model warmup to compile optimizations
+model_warmup [
+  {
+    name: "warmup_batch_1"
+    batch_size: 1
+    inputs {
+      key: "pixel_values"
+      value: {
+        data_type: TYPE_FP32
+        dims: [3, 518, 518]
+        zero_data: true
+      }
+    }
+  },
+  {
+    name: "warmup_batch_4"
+    batch_size: 4
+    inputs {
+      key: "pixel_values"
+      value: {
+        data_type: TYPE_FP32
+        dims: [3, 518, 518]
+        zero_data: true
+      }
+    }
+  }
+]
+
+# Version policy
+version_policy: { latest { num_versions: 1 } }

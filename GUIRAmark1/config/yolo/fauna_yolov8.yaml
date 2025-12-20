@@ -1,0 +1,6 @@
+names:
+  0: animal
+path: /workspaces/FIREPREVENTION/data/processed/fauna/detection
+test: test/images
+train: train/images
+val: valid/images

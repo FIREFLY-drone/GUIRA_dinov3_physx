@@ -1,0 +1,26 @@
+syntax = "proto3";
+package physx;
+
+message Vec3 { double x=1; double y=2; double z=3; }
+message Weather { string timestamp=1; Vec3 wind=2; double humidity=3; }
+
+message Ignition { string id=1; string wkb=2; double confidence=3; }
+
+message SimulationRequest {
+  string request_id = 1;
+  repeated Ignition ignitions = 2;
+  string terrain_mesh_uri = 3;
+  double dt = 4;
+  double duration_hours = 5;
+  int32 resolution_m = 6;
+}
+
+message SimulationResponse {
+  string request_id = 1;
+  string status = 2;
+  string results_uri = 3;
+}
+
+service PhysXSim {
+  rpc RunSimulation(SimulationRequest) returns (SimulationResponse);
+}

@@ -1,0 +1,42 @@
+# Ignore raw and processed data
+/data/processed
+data/raw
+data/processed
+# Ignore model checkpoints
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+
+# Ignore experiment outputs
+experiments/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VSCode settings
+.vscode/
+
+# Logs
+logs/*.log
+
+# Node modules and build artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Frontend environment
+integrations/guira_core/frontend/.env
+
+# API data (except examples)
+integrations/guira_core/orchestrator/api/data/
+
+# Built frontend assets (regenerated on build)
+integrations/guira_core/orchestrator/api/static/*.html
+integrations/guira_core/orchestrator/api/static/assets/

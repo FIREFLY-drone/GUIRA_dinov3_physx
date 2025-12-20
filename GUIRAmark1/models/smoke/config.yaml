@@ -1,0 +1,87 @@
+# Smoke Detection Training Configuration
+
+# Model Configuration
+model:
+  name: "smoke_timesformer"
+  backbone: "timesformer_base_patch16_224"
+  pretrained: true
+  num_classes: 2
+  num_frames: 16
+  image_size: 224
+  patch_size: 16
+  
+# Training Configuration
+training:
+  epochs: 30
+  batch_size: 8
+  device: "auto"  # auto, cuda, cpu
+  workers: 4
+  lr: 5e-4
+  weight_decay: 0.05
+  momentum: 0.9
+  warmup_epochs: 2
+  warmup_lr: 1e-6
+  cos_lr: true
+  
+# Data Configuration
+data:
+  path: "data/processed/smoke_timesformer"
+  train: "clips/train"
+  val: "clips/val"
+  test: "clips/test"
+  clip_length: 16
+  sample_rate: 8  # fps
+  stride: 2
+  names:
+    0: "no_smoke"
+    1: "smoke"
+
+# Augmentation Configuration
+augmentation:
+  temporal_jitter: true
+  random_crop: true
+  random_flip: true
+  color_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+  random_erasing: 0.2
+  mixup: 0.0  # disabled for temporal consistency
+  
+# Loss Configuration  
+loss:
+  type: "focal"  # focal, cross_entropy
+  focal_gamma: 2.0
+  focal_alpha: 0.25
+  class_weights:
+    no_smoke: 1.0
+    smoke: 2.0  # higher weight for smoke
+    
+# Optimization
+optimizer:
+  name: "adamw"
+  betas: [0.9, 0.999]
+  eps: 1e-8
+  
+scheduler:
+  name: "cosine"
+  warmup_epochs: 2
+  min_lr: 1e-6
+  
+# Evaluation Configuration
+evaluation:
+  conf_threshold: 0.5
+  aggregation: "majority"  # majority, average, max
+  
+# Paths
+paths:
+  save_dir: "models/smoke/runs"
+  log_dir: "models/smoke/logs"
+  tensorboard_dir: "models/smoke/tensorboard"
+
+# Modality handling
+modality:
+  thermal_mode: "pseudo_color"  # pseudo_color, replicate_channels
+  thermal_colormap: "inferno"
+  normalize_per_channel: true

@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: guira-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - guira-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: guira-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - guira-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: guira-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...'
+      sleep 10
+      
+      echo 'Creating Kafka topics...'
+      
+      # Create frames.raw topic for raw video frames
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9093 \
+        --topic frames.raw \
+        --partitions 3 \
+        --replication-factor 1 \
+        --config retention.ms=3600000 \
+        --config compression.type=snappy
+      
+      # Create frames.embeddings topic for frame embeddings
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9093 \
+        --topic frames.embeddings \
+        --partitions 3 \
+        --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config compression.type=lz4
+      
+      # Create detections topic for all detection events
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9093 \
+        --topic detections \
+        --partitions 3 \
+        --replication-factor 1 \
+        --config retention.ms=604800000 \
+        --config compression.type=snappy
+      
+      # Create simulations topic for fire spread simulations
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9093 \
+        --topic simulations \
+        --partitions 2 \
+        --replication-factor 1 \
+        --config retention.ms=604800000 \
+        --config compression.type=lz4
+      
+      # Create alerts topic for high-priority notifications
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9093 \
+        --topic alerts \
+        --partitions 2 \
+        --replication-factor 1 \
+        --config retention.ms=2592000000
+      
+      echo 'Listing created topics...'
+      kafka-topics --list --bootstrap-server kafka:9093
+      
+      echo 'Kafka topics created successfully!'
+      "
+    networks:
+      - guira-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: guira-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: guira-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - guira-network
+
+volumes:
+  zookeeper_data:
+  zookeeper_logs:
+  kafka_data:
+
+networks:
+  guira-network:
+    driver: bridge

@@ -1,0 +1,23 @@
+{
+  "vertices": 1600,
+  "faces": 3042,
+  "dem_shape": {
+    "height": 40,
+    "width": 40
+  },
+  "dem_path": "../../../../data/dem/sample_dem.tif",
+  "crs": "EPSG:4326",
+  "bounds": {
+    "left": -122.5,
+    "bottom": 37.7,
+    "right": -122.3,
+    "top": 37.9
+  },
+  "elevation_range": {
+    "min": 15.077557803182632,
+    "max": 722.2722129390248
+  },
+  "scale": 2.0,
+  "subsample": 25,
+  "has_vegetation": false
+}

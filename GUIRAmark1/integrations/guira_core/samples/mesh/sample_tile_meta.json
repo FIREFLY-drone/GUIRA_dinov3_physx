@@ -1,0 +1,23 @@
+{
+  "vertices": 10000,
+  "faces": 19602,
+  "dem_shape": {
+    "height": 100,
+    "width": 100
+  },
+  "dem_path": "/home/runner/work/FIREPREVENTION/FIREPREVENTION/data/dem/sample_dem.tif",
+  "crs": "EPSG:4326",
+  "bounds": {
+    "left": -122.5,
+    "bottom": 37.7,
+    "right": -122.3,
+    "top": 37.9
+  },
+  "elevation_range": {
+    "min": 0.0,
+    "max": 722.2722129390248
+  },
+  "scale": 1.0,
+  "subsample": 10,
+  "has_vegetation": false
+}

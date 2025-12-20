@@ -1,0 +1,34 @@
+# This file maps species from different datasets to a canonical set.
+# Example:
+# deer:
+#   - deer
+#   - stag
+#   - doe
+#   - fawn
+# fox:
+#   - fox
+#   - red_fox
+# other_animal:
+#   - animal
+#   - unknown
+#   - other
+kaggle_fauna:
+  - deer
+  - moose
+  - squirrel
+  - rabbit
+  - fox
+waid_fauna:
+  - elephant
+  - lion
+  - giraffe
+  - zebra
+  - rhino
+awir_fauna:
+  - bear
+  - elk
+  - wolf
+other_animal:
+  - animal
+  - unknown
+  - other

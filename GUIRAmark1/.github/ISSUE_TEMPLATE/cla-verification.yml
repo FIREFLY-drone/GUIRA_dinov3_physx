@@ -1,0 +1,275 @@
+name: 🚨 Legal Compliance Verification
+description: Mandatory legal verification for all new contributors
+title: "[LEGAL] CLA Verification Required - [Your GitHub Username]"
+labels: ["🔒 legal", "📋 compliance", "✍️ cla-required"]
+assignees:
+  - [your-github-username]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ MANDATORY LEGAL REQUIREMENTS
+        
+        Before any contribution can be accepted, you must complete the legal compliance process.
+        
+        **🚨 WARNING**: This repository contains proprietary software. Unauthorized use is prohibited.
+        
+  - type: checkboxes
+    id: legal-acknowledgment
+    attributes:
+      label: 📖 Legal Acknowledgment
+      description: You must check ALL boxes to proceed
+      options:
+        - label: I have read the complete [PROPRIETARY_LICENSE.md](./PROPRIETARY_LICENSE.md) file
+          required: true
+        - label: I understand this is proprietary software with commercial use prohibited
+          required: true
+        - label: I understand that all contributions become property of [Your Full Legal Name]
+          required: true
+        - label: I understand I will receive NO compensation, royalties, or attribution guarantees
+          required: true
+        - label: I understand the owner can commercialize my work without sharing profits
+          required: true
+        - label: I understand this agreement is irrevocable and permanent
+          required: true
+          
+  - type: checkboxes
+    id: cla-completion
+    attributes:
+      label: ✍️ CLA Completion
+      description: Contributor License Agreement requirements
+      options:
+        - label: I have downloaded and printed the [CLA.md](./CLA.md) file
+          required: true
+        - label: I have completed all required fields with accurate information
+          required: true
+        - label: I have signed the CLA with a witness present
+          required: true
+        - label: I have scanned the signed document to high-quality PDF
+          required: true
+        - label: I have emailed the signed CLA to the specified address
+          required: true
+          
+  - type: input
+    id: full-legal-name
+    attributes:
+      label: 👤 Full Legal Name
+      description: Your complete legal name as it appears on government ID
+      placeholder: "John Smith Doe"
+    validations:
+      required: true
+      
+  - type: input
+    id: email-address
+    attributes:
+      label: 📧 Email Address
+      description: Email address used to submit signed CLA
+      placeholder: "contributor@example.com"
+    validations:
+      required: true
+      
+  - type: input
+    id: cla-submission-date
+    attributes:
+      label: 📅 CLA Submission Date
+      description: Date when you emailed the signed CLA (YYYY-MM-DD)
+      placeholder: "2025-08-06"
+    validations:
+      required: true
+      
+  - type: input
+    id: witness-name
+    attributes:
+      label: 👥 Witness Name
+      description: Full name of witness who signed the CLA
+      placeholder: "Jane Witness Smith"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: contributor-type
+    attributes:
+      label: 🎭 Contributor Type
+      description: Select your contributor category
+      options:
+        - Individual contributor
+        - Academic researcher
+        - Student
+        - Corporate employee (with employer waiver)
+        - Government employee
+        - Non-profit organization member
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: employment-status
+    attributes:
+      label: 💼 Employment Status
+      description: Your current employment situation
+      options:
+        - Self-employed / Freelancer
+        - Private company employee
+        - Academic institution
+        - Government employee
+        - Student
+        - Unemployed
+        - Retired
+    validations:
+      required: true
+      
+  - type: input
+    id: employer-name
+    attributes:
+      label: 🏢 Employer/Institution Name
+      description: Name of your employer or academic institution (if applicable)
+      placeholder: "Tech Company Inc. / University Name"
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: employer-clearance
+    attributes:
+      label: 🏢 Employer Clearance (if applicable)
+      description: Only if you are employed
+      options:
+        - label: I have verified my employer allows contributions to open source projects
+        - label: My employer has waived any claims to my contributions
+        - label: I am authorized to assign rights on behalf of my employer
+        - label: I have attached signed employer waiver form
+          
+  - type: textarea
+    id: contribution-description
+    attributes:
+      label: 🛠️ Planned Contribution
+      description: Describe what you plan to contribute to the project
+      placeholder: |
+        Example:
+        - Bug fix for fire detection algorithm accuracy issue
+        - Performance optimization for smoke detection pipeline
+        - New test cases for vegetation health analysis
+        - Documentation improvements for setup process
+    validations:
+      required: true
+      
+  - type: textarea
+    id: technical-background
+    attributes:
+      label: 🎓 Technical Background
+      description: Brief description of your relevant technical experience
+      placeholder: |
+        Example:
+        - 5 years Python development experience
+        - Computer vision and deep learning background
+        - Previous work with PyTorch and OpenCV
+        - Experience with drone systems and geospatial analysis
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: technical-requirements
+    attributes:
+      label: 💻 Technical Requirements
+      description: Confirm you can meet technical standards
+      options:
+        - label: I can provide comprehensive unit tests for my contributions
+          required: true
+        - label: I can write detailed documentation and docstrings
+          required: true
+        - label: I can ensure my code meets the project's performance requirements
+          required: true
+        - label: I can provide type hints and follow code quality standards
+          required: true
+        - label: I have read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines
+          required: true
+          
+  - type: dropdown
+    id: contribution-urgency
+    attributes:
+      label: ⏰ Contribution Urgency
+      description: Timeline for your planned contribution
+      options:
+        - Immediate (within 1 week)
+        - Short-term (1-4 weeks)
+        - Medium-term (1-3 months)
+        - Long-term (3+ months)
+        - No specific timeline
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: communication-preferences
+    attributes:
+      label: 📞 Communication Preferences
+      description: How you prefer to receive updates
+      options:
+        - label: GitHub notifications
+        - label: Email updates
+        - label: Direct messages for urgent issues
+        - label: Weekly progress updates
+          
+  - type: input
+    id: time-zone
+    attributes:
+      label: 🌍 Time Zone
+      description: Your time zone for coordination purposes
+      placeholder: "UTC-5 (EST) / UTC+1 (CET) / etc."
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional-information
+    attributes:
+      label: 📝 Additional Information
+      description: Any other relevant information
+      placeholder: |
+        - Special circumstances affecting your contribution
+        - Questions about the legal process
+        - Previous open source contribution experience
+        - Specific areas of interest in the project
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: final-confirmation
+    attributes:
+      label: ✅ Final Confirmation
+      description: Final acknowledgment before submission
+      options:
+        - label: I confirm all information provided is accurate and complete
+          required: true
+        - label: I understand processing may take 2-5 business days
+          required: true
+        - label: I will not submit any contributions until receiving written approval
+          required: true
+        - label: I understand violation of these terms may result in legal action
+          required: true
+        - label: I acknowledge this agreement is governed by [Your Jurisdiction] law
+          required: true
+          
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 📋 NEXT STEPS
+        
+        1. **Submit** this form
+        2. **Wait** for initial review (24-48 hours)
+        3. **Check** your email for CLA processing updates
+        4. **Receive** written approval with CLA ID number
+        5. **Begin** contributing with approved status
+        
+        ## 📞 CONTACT INFORMATION
+        
+        - **Technical Questions**: [tech-email@domain.com]
+        - **Legal Questions**: [legal-email@domain.com]
+        - **Process Issues**: [admin-email@domain.com]
+        
+        ## ⚖️ LEGAL NOTICE
+        
+        **By submitting this form, you acknowledge understanding of all legal terms and agree to be bound by the proprietary license agreement.**
+        
+        ---
+        
+        *CLA Verification System v2.0 - Fire Prevention System Repository*

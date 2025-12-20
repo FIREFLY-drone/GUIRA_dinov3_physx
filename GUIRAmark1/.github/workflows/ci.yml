@@ -1,0 +1,571 @@
+name: Fire Prevention CI
+
+on:
+  push:
+    branches: [ main, develop, copilot/* ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run nightly builds at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.10'
+  # Use CPU-only PyTorch for CI to avoid GPU requirements
+  TORCH_INDEX_URL: 'https://download.pytorch.org/whl/cpu'
+
+jobs:
+  lint-and-format:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black ruff mypy flake8 isort
+
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff .
+        
+    - name: Run Ruff linter
+      run: |
+        ruff check . --output-format=github
+
+    - name: Run import sorting check
+      run: |
+        isort --check-only --diff .
+
+    - name: Type check with MyPy
+      run: |
+        # Install minimal deps for type checking
+        pip install torch torchvision --index-url ${{ env.TORCH_INDEX_URL }}
+        pip install numpy opencv-python-headless
+        
+        # Run mypy on core modules
+        mypy src/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true  # MyPy may have issues with missing stubs
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision --index-url ${{ env.TORCH_INDEX_URL }}
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-xdist pytest-timeout coverage
+
+    - name: Run unit tests
+      run: |
+        pytest tests/ \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --junit-xml=test-results.xml \
+          --timeout=300 \
+          --tb=short \
+          -v
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.10'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+          coverage.xml
+
+  smoke-training:
+    name: Smoke Training Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision --index-url ${{ env.TORCH_INDEX_URL }}
+        pip install -r requirements.txt
+
+    - name: Create minimal test data
+      run: |
+        python create_comprehensive_data.py --minimal --test-only
+        python scripts/validate_datasets.py --config config.yaml --quick-check
+
+    - name: Fire Detection - Smoke Training (5 batches)
+      run: |
+        python models/fire_yolov8/train_fire.py \
+          --config config.yaml \
+          --epochs 1 \
+          --batch-size 2 \
+          --device cpu \
+          --project runs/ci_tests \
+          --name fire_smoke_test \
+          --max-batches 5
+      timeout-minutes: 10
+
+    - name: Smoke Detection - Smoke Training (3 batches)
+      run: |
+        python models/smoke_timesformer/train_smoke.py \
+          --config config.yaml \
+          --epochs 1 \
+          --batch-size 1 \
+          --device cpu \
+          --project runs/ci_tests \
+          --name smoke_smoke_test \
+          --max-batches 3
+      timeout-minutes: 10
+
+    - name: Vegetation Health - Smoke Training (5 batches)
+      run: |
+        python models/vegetation_resnet_vari/train_vegetation.py \
+          --config config.yaml \
+          --epochs 1 \
+          --batch-size 2 \
+          --device cpu \
+          --project runs/ci_tests \
+          --name vegetation_smoke_test \
+          --max-batches 5
+      timeout-minutes: 5
+
+    - name: Fauna Detection - Smoke Training (3 batches)
+      run: |
+        python models/fauna_yolov8_csrnet/train_yolo.py \
+          --config config.yaml \
+          --epochs 1 \
+          --batch-size 1 \
+          --device cpu \
+          --project runs/ci_tests \
+          --name fauna_smoke_test \
+          --max-batches 3
+      timeout-minutes: 10
+
+    - name: Fire Spread - Smoke Training (3 batches)
+      run: |
+        python models/spread_hybrid/train_spread.py \
+          --config config.yaml \
+          --epochs 1 \
+          --batch-size 1 \
+          --device cpu \
+          --project runs/ci_tests \
+          --name spread_smoke_test \
+          --max-batches 3
+      timeout-minutes: 10
+
+    - name: Upload training artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: smoke-training-results
+        path: |
+          runs/ci_tests/
+          logs/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision --index-url ${{ env.TORCH_INDEX_URL }}
+        pip install -r requirements.txt
+
+    - name: Test inference hooks integration
+      run: |
+        python -c "
+        from src.inference_hooks import detect_fire, classify_smoke_clip, detect_fauna, classify_veg
+        import numpy as np
+        
+        # Test all inference functions with mock data
+        frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        fire_result = detect_fire(frame)
+        print(f'✅ Fire detection: {len(fire_result[\"boxes\"])} detections')
+        
+        clip = np.random.randint(0, 255, (8, 224, 224, 3), dtype=np.uint8) 
+        smoke_prob = classify_smoke_clip(clip)
+        print(f'✅ Smoke probability: {smoke_prob:.3f}')
+        
+        fauna_result, density = detect_fauna(frame)
+        print(f'✅ Fauna detection: {len(fauna_result[\"boxes\"])} detections')
+        
+        patch = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
+        veg_result = classify_veg(patch)
+        print(f'✅ Vegetation health: {veg_result[\"health_class\"]}')
+        
+        print('✅ All inference hooks working')
+        "
+
+    - name: Test maps adapter integration  
+      run: |
+        python -c "
+        from src.maps_adapter import create_fire_overlay, CameraIntrinsics, DronePose
+        
+        intrinsics = CameraIntrinsics(fx=800, fy=800, cx=320, cy=240)
+        pose = DronePose(lat=37.7749, lon=-122.4194, alt=100, roll=0, pitch=-10, yaw=45)
+        fire_dets = {'boxes': [[100, 150, 200, 250]], 'classes': [0], 'scores': [0.85]}
+        
+        geojson = create_fire_overlay(fire_dets, pose, intrinsics, 640, 480)
+        assert 'FeatureCollection' in geojson
+        print('✅ Maps adapter integration working')
+        "
+
+    - name: Test video streaming integration
+      run: |
+        python -c "
+        from src.video_streaming import StreamConfig, VideoStreamProcessor
+        from src.maps_adapter import CameraIntrinsics
+        
+        config = StreamConfig(target_fps=15.0)
+        intrinsics = CameraIntrinsics(fx=400, fy=400, cx=320, cy=240)
+        processor = VideoStreamProcessor(config, intrinsics)
+        
+        # Test processor initialization
+        assert processor.config.target_fps == 15.0
+        print('✅ Video streaming integration working')
+        "
+
+    - name: Test evaluation scripts
+      run: |
+        # Test evaluation scripts don't crash on import
+        python -c "from scripts.evaluate_fire_yolov8 import evaluate_fire_model; print('✅ Fire eval script OK')"
+        python -c "from scripts.evaluate_smoke_timesformer import evaluate_smoke_model; print('✅ Smoke eval script OK')"  
+        python -c "from scripts.evaluate_vegetation_resnet_vari import evaluate_vegetation_model; print('✅ Vegetation eval script OK')"
+        python -c "from scripts.evaluate_fauna_yolo_csrnet import evaluate_fauna_models; print('✅ Fauna eval script OK')"
+        python -c "from scripts.evaluate_spread_hybrid import evaluate_spread_model; print('✅ Spread eval script OK')"
+
+    - name: Test export scripts
+      run: |
+        # Test export scripts don't crash on import
+        python -c "from scripts.export_fire_yolov8 import export_fire_model; print('✅ Fire export script OK')"
+        python -c "from scripts.export_smoke_timesformer import export_smoke_model; print('✅ Smoke export script OK')"
+        python -c "from scripts.export_vegetation_resnet_vari import export_vegetation_model; print('✅ Vegetation export script OK')"
+        python -c "from scripts.export_fauna_yolo_csrnet import export_fauna_models; print('✅ Fauna export script OK')" 
+        python -c "from scripts.export_spread_hybrid import export_spread_model; print('✅ Spread export script OK')"
+
+  security-scan:
+    name: Security & Dependency Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit semgrep
+
+    - name: Check dependencies for security vulnerabilities
+      run: |
+        safety check --json --output safety-report.json || true
+        
+    - name: Run Bandit security linter
+      run: |
+        bandit -r src/ scripts/ models/ -f json -o bandit-report.json || true
+
+    - name: Run Semgrep security scan
+      run: |
+        semgrep --config=auto src/ scripts/ --json --output=semgrep-report.json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json  
+          semgrep-report.json
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+        pip install mkdocstrings mkdocstrings-python
+
+    - name: Validate Markdown files
+      run: |
+        # Check for broken links in markdown files
+        find docs/ -name "*.md" -exec grep -l "http" {} \; > links_to_check.txt || true
+        echo "Found markdown files with links - manual review recommended"
+
+    - name: Generate API documentation
+      run: |
+        # Generate API docs from docstrings
+        python -c "
+        import pkgutil
+        import importlib
+        import sys
+        sys.path.append('src')
+        
+        # Document main modules
+        modules = ['inference_hooks', 'maps_adapter', 'video_streaming']
+        for module in modules:
+            try:
+                mod = importlib.import_module(module)
+                print(f'✅ {module} module documented')
+            except ImportError as e:
+                print(f'❌ {module} module not found: {e}')
+        "
+
+    - name: Build documentation site
+      run: |
+        # Create a basic mkdocs config if it doesn't exist
+        if [ ! -f mkdocs.yml ]; then
+          cat > mkdocs.yml << EOF
+        site_name: Fire Prevention System Documentation
+        site_description: Drone-based fire prevention and monitoring system
+        
+        nav:
+          - Home: README.md
+          - Getting Started: next-steps.md
+          - Models:
+            - Fire Detection: docs/models/fire_yolov8.md
+            - Smoke Detection: docs/models/smoke_timesformer.md
+            - Fauna Detection: docs/models/fauna_detection.md
+            - Vegetation Health: docs/models/vegetation_health.md
+            - Fire Spread: docs/models/fire_spread.md
+          - Integrations:
+            - DJI Cloud API: docs/integrations/dji-cloud-api.md
+          - Datasets: docs/datasets/REGISTRY.md
+        
+        theme:
+          name: material
+          palette:
+            primary: red
+            accent: orange
+          features:
+            - navigation.sections
+            - navigation.expand
+            - toc.integrate
+        
+        plugins:
+          - search
+          - mermaid2
+        EOF
+        fi
+        
+        mkdocs build --verbose
+
+    - name: Upload documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-site
+        path: site/
+
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[benchmark]')
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision --index-url ${{ env.TORCH_INDEX_URL }}
+        pip install -r requirements.txt
+        pip install memory-profiler line-profiler
+
+    - name: Run inference speed benchmarks
+      run: |
+        python -c "
+        import time
+        import numpy as np
+        from src.inference_hooks import detect_fire, classify_smoke_clip
+        
+        # Benchmark fire detection
+        frame = np.random.randint(0, 255, (640, 640, 3), dtype=np.uint8)
+        
+        times = []
+        for _ in range(10):
+            start = time.time()
+            result = detect_fire(frame)
+            times.append(time.time() - start)
+        
+        avg_time = np.mean(times)
+        fps = 1.0 / avg_time
+        print(f'Fire detection: {avg_time:.3f}s avg, {fps:.1f} FPS')
+        
+        # Benchmark smoke detection
+        clip = np.random.randint(0, 255, (8, 224, 224, 3), dtype=np.uint8)
+        
+        times = []
+        for _ in range(5):
+            start = time.time()
+            prob = classify_smoke_clip(clip)
+            times.append(time.time() - start)
+        
+        avg_time = np.mean(times)
+        fps = 1.0 / avg_time  
+        print(f'Smoke detection: {avg_time:.3f}s avg, {fps:.1f} FPS')
+        "
+
+    - name: Memory usage benchmark
+      run: |
+        python -c "
+        import psutil
+        import numpy as np
+        from src.inference_hooks import detect_fire
+        
+        process = psutil.Process()
+        
+        # Initial memory
+        mem_before = process.memory_info().rss / 1024 / 1024
+        
+        # Run inference 
+        frame = np.random.randint(0, 255, (1280, 1280, 3), dtype=np.uint8)
+        result = detect_fire(frame)
+        
+        # Final memory
+        mem_after = process.memory_info().rss / 1024 / 1024
+        mem_usage = mem_after - mem_before
+        
+        print(f'Memory usage: {mem_usage:.1f} MB increase')
+        print(f'Total memory: {mem_after:.1f} MB')
+        "
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create deployment package
+      run: |
+        # Create a deployment-ready package
+        mkdir -p dist/fire-prevention-system
+        
+        # Copy essential files
+        cp -r src/ dist/fire-prevention-system/
+        cp -r scripts/ dist/fire-prevention-system/
+        cp -r models/ dist/fire-prevention-system/
+        cp -r docs/ dist/fire-prevention-system/
+        cp config.yaml dist/fire-prevention-system/
+        cp requirements.txt dist/fire-prevention-system/
+        cp README.md dist/fire-prevention-system/
+        cp next-steps.md dist/fire-prevention-system/
+        
+        # Create version file
+        echo "version: $(git describe --tags --always)" > dist/fire-prevention-system/VERSION
+        echo "commit: $(git rev-parse HEAD)" >> dist/fire-prevention-system/VERSION
+        echo "date: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> dist/fire-prevention-system/VERSION
+        
+        # Create deployment archive
+        cd dist
+        tar -czf fire-prevention-system.tar.gz fire-prevention-system/
+
+    - name: Upload deployment package
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-package
+        path: dist/fire-prevention-system.tar.gz
+        retention-days: 30
+
+  notify-status:
+    name: Notify Build Status
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests, smoke-training, integration-tests, security-scan]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.lint-and-format.result == 'success' && needs.unit-tests.result == 'success' && needs.integration-tests.result == 'success'
+      run: |
+        echo "🎉 All CI checks passed successfully!"
+        echo "✅ Code quality: PASSED"
+        echo "✅ Unit tests: PASSED"  
+        echo "✅ Integration tests: PASSED"
+        echo "✅ Smoke training: ${{ needs.smoke-training.result }}"
+        echo "Ready for deployment! 🚀"
+
+    - name: Notify failure
+      if: needs.lint-and-format.result == 'failure' || needs.unit-tests.result == 'failure' || needs.integration-tests.result == 'failure'
+      run: |
+        echo "❌ CI checks failed!"
+        echo "Code quality: ${{ needs.lint-and-format.result }}"
+        echo "Unit tests: ${{ needs.unit-tests.result }}"
+        echo "Integration tests: ${{ needs.integration-tests.result }}"
+        echo "Please fix issues before merging."
+        exit 1

@@ -1,0 +1,540 @@
+# Fire Prevention System - Master Configuration
+# This centralizes all knobs and settings for the complete system
+
+# Global settings
+global:
+  seed: 42
+  device: cuda  # cuda, cpu, auto
+  workers: 4
+  log_level: INFO
+  random_state: 42
+  
+# Paths
+paths:
+  data_dir: /workspaces/FIREPREVENTION/data
+  models_dir: /workspaces/FIREPREVENTION/models
+  experiments_dir: /workspaces/FIREPREVENTION/experiments
+  logs_dir: /workspaces/FIREPREVENTION/logs
+  exports_dir: /workspaces/FIREPREVENTION/exports
+  
+# Model paths
+model_paths:
+  fire_yolov8: ${paths.models_dir}/fire_yolov8/best.pt
+  smoke_timesformer: ${paths.models_dir}/smoke_timesformer/best.pt
+  fauna_yolov8: ${paths.models_dir}/fauna_yolov8_csrnet/yolo_best.pt
+  fauna_csrnet: ${paths.models_dir}/fauna_yolov8_csrnet/csrnet_best.pth
+  vegetation_resnet_vari: ${paths.models_dir}/vegetation_resnet_vari/best.pt
+  spread_hybrid: ${paths.models_dir}/spread_hybrid/best.pt
+
+# Dataset configuration
+datasets:
+  enable_flags:
+    flame_rgb: true
+    flame2_rgb_ir: true
+    sfgdn_fire: true
+    wit_uas_thermal: false  # Heavy dataset
+    waid_fauna: true
+    kaggle_fauna: false    # Requires API key
+    neon_canopy: true
+    isaid_aerial: false    # Very large dataset
+  
+  # Tiling parameters
+  tiling:
+    tile_size: 640
+    overlap_ratio: 0.1
+    min_object_size: 16
+    
+  # Clip generation for video datasets
+  clip_generation:
+    clip_length: 8        # frames
+    stride: 4             # frame stride
+    min_clip_length: 6    # minimum acceptable
+    sample_rate: 2        # fps for sampling
+    
+  # Augmentation toggles
+  augmentation:
+    enable_mosaic: true
+    enable_mixup: true
+    enable_copy_paste: true
+    enable_temporal_jitter: true
+    brightness_range: [0.8, 1.2]
+    contrast_range: [0.8, 1.2]
+    saturation_range: [0.8, 1.2]
+
+# Training configurations - Centralized knobs
+training:
+  fire_yolov8:
+    # Core parameters
+    model: yolov8n.pt
+    data: ${paths.data_dir}/manifests/fire_yolov8.yaml
+    epochs: 150           # Extended for better convergence
+    batch_size: 16
+    img_size: 640
+    lr0: 0.01            # Initial learning rate (SGD)
+    optimizer: SGD
+    cos_lr: true         # Cosine learning rate schedule
+    
+    # Thermal fusion
+    thermal_fusion:
+      mode: late_fusion   # late_fusion, early_fusion, feature_fusion
+      enable: true
+      pseudo_rgb_fallback: true
+      
+    # Class weights
+    class_weights:
+      fire: 1.0
+      smoke: 1.5          # Boost smoke class
+      
+    # Training strategy
+    freeze_bn_epochs: 3   # Freeze batch norm for first N epochs
+    warmup_iterations: 1000
+    ema_enabled: true     # Exponential moving average
+    
+    # Augmentation
+    augmentation:
+      mosaic: 1.0
+      hsv_h: 0.015
+      hsv_s: 0.7
+      hsv_v: 0.4
+      degrees: 0.0        # No rotation to preserve fire orientation
+      translate: 0.1
+      scale: 0.5
+      shear: 0.0
+      perspective: 0.0
+      flipud: 0.0         # No vertical flip
+      fliplr: 0.5         # 50% horizontal flip
+      
+    # Test Time Augmentation
+    tta:
+      enable: true
+      scales: [0.5, 1.0, 1.5]
+      
+  smoke_timesformer:
+    # Core parameters  
+    model: facebook/timesformer-base-finetuned-k400
+    sequence_length: 8    # Optimal for speed/accuracy
+    epochs: 30
+    batch_size: 8         # Memory constrained
+    lr: 5e-4             # Lower LR for transformer fine-tuning
+    optimizer: AdamW
+    weight_decay: 0.05
+    scheduler: cosine
+    
+    # Model architecture
+    patch_size: 16
+    embed_dim: 768
+    depth: 12
+    num_heads: 12
+    
+    # Loss function
+    loss:
+      type: focal         # Handle class imbalance
+      gamma: 2.0
+      alpha: 0.25
+      
+    # Augmentation
+    augmentation:
+      temporal_jitter: 0.1
+      color_jitter: 0.4
+      random_crop: 0.8
+      horizontal_flip: 0.5
+      normalize: true     # ImageNet normalization
+      resize: [224, 224]
+      
+    # Gradient settings
+    gradient_clipping: 1.0
+    mixed_precision: true
+
+  fauna_yolov8_csrnet:
+    # YOLO component
+    yolo:
+      model: yolov8n.pt
+      epochs: 200         # Extended for wildlife detection
+      batch_size: 12
+      lr: 1e-3
+      img_size: 960       # Higher resolution for small animals
+      
+      # Multi-task training
+      health_classification_weight: 0.5
+      species_consistency_weight: 0.1
+      
+    # CSRNet component  
+    csrnet:
+      epochs: 100
+      batch_size: 8       # Memory intensive
+      lr: 1e-5           # Lower LR for density estimation
+      optimizer: Adam
+      loss: MSE
+      gaussian_sigma: 15  # For density map generation
+      downsample_factor: 8
+      
+    # Joint training
+    joint_training:
+      enable: true
+      epochs: 50
+      loss_weights:
+        detection: 0.6
+        density: 0.4
+        
+    # Classes
+    species_classes:
+      - deer
+      - elk  
+      - bear
+      - bird
+      - other
+    health_classes:
+      - healthy
+      - distressed
+      
+    # Augmentation
+    augmentation:
+      mosaic: 1.0
+      hsv_h: 0.015
+      hsv_s: 0.7
+      hsv_v: 0.4
+      mixup: 0.1
+      copy_paste: 0.1
+
+  vegetation_resnet_vari:
+    # Core parameters
+    model: resnet50       # Backbone architecture
+    epochs: 35
+    batch_size: 24
+    lr: 1e-3             # Standard learning rate for SGD
+    optimizer: SGD
+    momentum: 0.9
+    weight_decay: 1e-4
+    scheduler: cosine
+    img_size: 224        # Standard ResNet input size
+    
+    # VARI integration
+    vari:
+      enabled: true       # Enable VARI integration
+      mlp_hidden: 128     # VARI branch hidden size
+      fusion_dim: 256     # Combined feature dimension
+      
+    # Classes and weights
+    classes:
+      - healthy
+      - dry
+      - burned
+    class_weights: [1.0, 2.0, 3.0]  # Boost rare classes
+    
+    # Crown extraction
+    crown_extraction:
+      enable_deepforest: true
+      deepforest_model: tree
+      min_crown_area: 100
+      overlap_threshold: 0.3
+      confidence_threshold: 0.5
+      
+    # Augmentation
+    augmentation:
+      random_crop: 0.8
+      horizontal_flip: 0.5
+      vertical_flip: 0.1   # Limited vertical flip
+      color_jitter:
+        brightness: 0.2
+        contrast: 0.2
+        saturation: 0.1
+        hue: 0.05
+      rotation: 10         # Small rotations (degrees)
+
+  spread_hybrid:
+    # Core parameters
+    input_dim: 1          # Fire probability channel
+    hidden_dim: 64        # ConvLSTM hidden features
+    kernel_size: 3        # Spatial convolution kernel
+    num_layers: 2         # Stacked LSTM layers
+    dropout: 0.1
+    
+    epochs: 50
+    batch_size: 4         # Memory intensive 3D convolutions
+    lr: 1e-4             # Lower LR for stable convergence
+    optimizer: Adam
+    weight_decay: 1e-5
+    scheduler: plateau
+    
+    # Spatial/temporal settings
+    grid_size: [256, 256]
+    cell_size: 30         # meters per pixel
+    timestep: 300         # seconds per timestep
+    input_timesteps: 6    # Historical sequence length
+    output_timesteps: 12  # Future prediction length
+    
+    # Physics regularization
+    physics:
+      lambda: 0.1         # Physics loss weight
+      monotonic_growth_penalty: true
+      max_spread_rate_penalty: true  
+      spatial_connectivity_penalty: true
+      max_realistic_growth: 100  # pixels per timestep
+      
+    # Loss components
+    loss:
+      dice_weight: 0.5
+      bce_weight: 0.5
+      physics_weight: 0.1
+      
+    # Augmentation
+    augmentation:
+      spatial:
+        rotation: [-15, 15]
+        horizontal_flip: 0.5
+        vertical_flip: 0.5
+        elastic_deform: 0.1
+      temporal:
+        time_jitter: 0.1
+        sequence_dropout: 0.05
+        reverse_sequence: 0.1
+      physics_aware:
+        wind_direction_shift: [-30, 30]
+        fuel_load_multiplier: [0.8, 1.2]
+
+# Inference and deployment settings
+inference:
+  # Model deployment paths
+  endpoints:
+    fire_detection: /predict/fire
+    smoke_detection: /predict/smoke  
+    fauna_detection: /predict/fauna
+    vegetation_health: /predict/vegetation
+    fire_spread: /predict/spread
+    
+  # Performance settings
+  performance:
+    target_fps: 15.0      # Target processing FPS
+    batch_size: 1         # Inference batch size
+    max_latency_ms: 100   # Maximum acceptable latency
+    warmup_iterations: 3  # Model warmup
+    
+  # Confidence thresholds
+  thresholds:
+    fire_confidence: 0.5
+    smoke_confidence: 0.5
+    fauna_confidence: 0.5
+    vegetation_confidence: 0.7
+    
+  # Decision logic
+  decision:
+    fire_smoke_combined_threshold: 0.7
+    temporal_consistency_frames: 3
+    hysteresis_trigger: 0.7
+    hysteresis_clear: 0.5
+
+# Streaming and real-time processing
+streaming:
+  video:
+    input_resolution: [640, 480]
+    target_fps: 15.0
+    max_queue_size: 5
+    processing_threads: 2
+    buffer_size: 30       # seconds
+    
+  # Model enables
+  models:
+    enable_fire_detection: true
+    enable_smoke_detection: true
+    enable_fauna_detection: false    # Disabled by default for performance
+    enable_vegetation_analysis: false # Disabled by default for performance
+    
+  # Performance optimization
+  optimization:
+    use_tensorrt: false    # Enable TensorRT optimization
+    use_half_precision: true
+    dynamic_batching: false
+    model_parallelism: false
+
+# Export settings
+export:
+  formats:
+    - onnx
+    - torchscript
+  
+  optimization:
+    dynamic_shapes: true
+    simplify_onnx: true
+    opset_version: 11
+    
+  quantization:
+    enable: false
+    method: dynamic      # dynamic, static, qat
+    calibration_samples: 100
+
+# Maps and geospatial settings  
+geospatial:
+  # Camera calibration
+  camera_intrinsics:
+    fx: 800.0
+    fy: 800.0  
+    cx: 320.0
+    cy: 240.0
+    k1: -0.1
+    k2: 0.05
+    
+  # Coordinate systems
+  coordinate_system:
+    input_crs: EPSG:4326   # WGS84
+    output_crs: EPSG:3857  # Web Mercator
+    
+  # Map rendering
+  rendering:
+    max_zoom_level: 18
+    tile_size: 256
+    overlay_opacity: 0.7
+    
+# DJI Cloud API integration
+dji_integration:
+  # Connection settings
+  connection:
+    timeout_seconds: 30
+    retry_attempts: 3
+    heartbeat_interval: 10
+    
+  # Streaming preferences  
+  streaming:
+    preferred_quality: 1080p
+    fallback_quality: 720p
+    max_bitrate: 5000     # kbps
+    
+  # Telemetry settings
+  telemetry:
+    update_rate: 5        # Hz
+    buffer_size: 100      # messages
+    required_gps_level: 4 # Minimum GPS signal strength
+
+# Monitoring and logging
+monitoring:
+  # Performance metrics
+  metrics:
+    enable_fps_tracking: true
+    enable_latency_tracking: true  
+    enable_memory_tracking: true
+    enable_gpu_tracking: true
+    
+  # Logging
+  logging:
+    level: INFO          # DEBUG, INFO, WARNING, ERROR
+    format: structured   # structured, simple
+    output: both        # console, file, both
+    max_file_size: 100MB
+    backup_count: 5
+    
+  # Alerts
+  alerts:
+    low_fps_threshold: 10.0
+    high_latency_threshold: 200  # ms
+    memory_threshold: 80         # percent
+    
+# Hardware configuration
+hardware:
+  # GPU settings
+  gpu:
+    memory_fraction: 0.8
+    allow_growth: true
+    device_selection: auto  # auto, manual, specific
+    
+  # CPU settings  
+  cpu:
+    num_threads: 0       # 0 = auto
+    use_mkl: true
+    
+  # Memory settings
+  memory:
+    cache_size: 1000     # frames
+    prefetch_factor: 2
+    pin_memory: true
+    persistent_workers: true
+
+# Development and debugging
+development:
+  # Debug settings
+  debug:
+    save_intermediate: false
+    visualize_detections: false
+    profile_inference: false
+    
+  # Testing
+  testing:
+    mock_models: false
+    synthetic_data: false
+    deterministic: true
+    
+# Quality gates and acceptance criteria
+quality_gates:
+  # Model performance thresholds
+  performance:
+    fire_yolov8:
+      map50_min: 0.75
+      precision_min: 0.80
+      recall_min: 0.70
+      fps_min: 15
+      
+    smoke_timesformer:
+      auc_min: 0.85
+      f1_min: 0.75
+      precision_min: 0.80
+      fps_min: 2
+      
+    fauna_yolov8_csrnet:
+      yolo_map50_min: 0.70
+      csrnet_mae_max: 0.10
+      density_correlation_min: 0.85
+      
+    vegetation_resnet_vari:
+      accuracy_min: 0.80
+      macro_f1_min: 0.75
+      vari_correlation_min: 0.70
+      
+    spread_hybrid:
+      iou_1h_min: 0.70
+      mse_max: 0.05
+      physics_consistency_min: 0.70
+
+# Dataset URLs and metadata
+datasets_metadata:
+  fire:
+    flame_rgb:
+      name: FLAME UAV Wildfire
+      url: https://github.com/AlirezaShamsoshoara/Fire-Detection-UAV-Aerial-Image-Classification-Segmentation-UnmannedAerialVehicle
+      license: Academic Use
+      size_gb: 2.5
+      
+    flame2_rgb_ir:
+      name: Flame_2 RGB+IR Dataset  
+      url: https://github.com/xiwenc1/Flame_2_dataset
+      license: MIT
+      size_gb: 1.8
+      
+    sfgdn_fire:
+      name: SFGDN Flame Detection
+      url: https://github.com/mi-luo/Flame-detection
+      license: Apache 2.0
+      size_gb: 3.2
+      
+  fauna:
+    waid_fauna:
+      name: WAID Wildlife Aerial Images
+      url: https://github.com/xiaohuicui/WAID  
+      license: CC BY-NC-SA 4.0
+      size_gb: 5.7
+      
+    kaggle_fauna:
+      name: Wildlife Aerial Imagery Dataset
+      url: https://www.kaggle.com/datasets/sugamg/wildlife-aerial-imagery-dataset
+      license: Database Contents License
+      size_gb: 1.2
+      
+  vegetation:
+    neon_canopy:
+      name: DeepForest NEON Tree Crowns
+      url: https://deepforest.readthedocs.io/
+      license: MIT  
+      size_gb: 8.1
+      
+    isaid_aerial:
+      name: iSAID Aerial Segmentation
+      url: https://captain-whu.github.io/iSAID/
+      license: Academic Use
+      size_gb: 45.6
