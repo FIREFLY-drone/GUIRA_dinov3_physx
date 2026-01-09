@@ -1,38 +1,47 @@
-<!DOCTYPE html>
-<!-- 
-GUIRA SECURE TERMINAL
-ENCRYPTED SOURCE CODE
-ID: 8829-XJ-SECURE
--->
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>GUIRA - System Access</title>
-    <style>
-        body { background-color: #0a0a0a; color: #3b82f6; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #loader { text-align: center; display: flex; flex-col; justify-center; align-items: center; }
-        .spinner { width: 50px; height: 50px; border: 3px solid #1e293b; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 24px auto; }
-        .text { font-size: 14px; letter-spacing: 0.2em; font-weight: bold; text-transform: uppercase; }
-        .sub { margin-top: 12px; font-size: 10px; color: #475569; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <div id="loader">
-        <div class="spinner"></div>
-        <div class="text">Loading Secure Environment</div>
-        <div class="sub">GUIRA // ENCRYPTED CONNECTION</div>
-    </div>
-    <script>
-        (function() {
-            setTimeout(function() {
-                var _code = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CiAgICA8bWV0YSBjaGFyc2V0PSJVVEYtOCI+CiAgICA8bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLCBpbml0aWFsLXNjYWxlPTEuMCI+CiAgICA8dGl0bGU+R1VJUkEgLSBMb2dpbjwvdGl0bGU+CiAgICA8c2NyaXB0IHNyYz0iaHR0cHM6Ly9jZG4udGFpbHdpbmRjc3MuY29tIj48L3NjcmlwdD4KICAgIDxzY3JpcHQ+CiAgICAgICAgdGFpbHdpbmQuY29uZmlnID0gewogICAgICAgICAgICB0aGVtZTogewogICAgICAgICAgICAgICAgZXh0ZW5kOiB7CiAgICAgICAgICAgICAgICAgICAgY29sb3JzOiB7CiAgICAgICAgICAgICAgICAgICAgICAgIGJhY2tncm91bmQ6ICcjMTIxMjEyJywKICAgICAgICAgICAgICAgICAgICAgICAgc3VyZmFjZTogJyMxZTFlMWUnLAogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KICAgIDwvc2NyaXB0PgogICAgPHN0eWxlPgogICAgICAgIGJvZHkgewogICAgICAgICAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMTIxMjEyOwogICAgICAgICAgICBjb2xvcjogd2hpdGU7CiAgICAgICAgICAgIGZvbnQtZmFtaWx5OiB1aS1zYW5zLXNlcmlmLCBzeXN0ZW0tdWksIC1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgIlNlZ29lIFVJIiwgUm9ib3RvLCAiSGVsdmV0aWNhIE5ldWUiLCBBcmlhbCwgc2Fucy1zZXJpZjsKICAgICAgICB9CiAgICAgICAgLnNoYWtlIHsKICAgICAgICAgICAgYW5pbWF0aW9uOiBzaGFrZSAwLjVzIGN1YmljLWJlemllciguMzYsLjA3LC4xOSwuOTcpIGJvdGg7CiAgICAgICAgfQogICAgICAgIEBrZXlmcmFtZXMgc2hha2UgewogICAgICAgICAgICAxMCUsIDkwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlM2QoLTFweCwgMCwgMCk7IH0KICAgICAgICAgICAgMjAlLCA4MCUgeyB0cmFuc2Zvcm06IHRyYW5zbGF0ZTNkKDJweCwgMCwgMCk7IH0KICAgICAgICAgICAgMzAlLCA1MCUsIDcwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlM2QoLTRweCwgMCwgMCk7IH0KICAgICAgICAgICAgNDAlLCA2MCUgeyB0cmFuc2Zvcm06IHRyYW5zbGF0ZTNkKDRweCwgMCwgMCk7IH0KICAgICAgICB9CiAgICA8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5IGNsYXNzPSJmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBoLXNjcmVlbiB3LWZ1bGwgYmctWyMxMjEyMTJdIj4KCiAgICA8ZGl2IGNsYXNzPSJ3LWZ1bGwgbWF4LXctc20gcC04IGJnLVsjMWUxZTFlXSByb3VuZGVkLTJ4bCBzaGFkb3ctMnhsIGJvcmRlciBib3JkZXItZ3JheS04MDAiPgogICAgICAgIDxkaXYgY2xhc3M9ImZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIG1iLTEwIj4KICAgICAgICAgICAgPCEtLSBMb2dvIC8gVGV4dCAtLT4KICAgICAgICAgICAgPGgxIGNsYXNzPSJ0ZXh0LTV4bCBmb250LWV4dHJhYm9sZCB0cmFja2luZy10aWdodGVyIHRleHQtd2hpdGUgbWItMiIgc3R5bGU9ImZvbnQtZmFtaWx5OiAnQXJpYWwgQmxhY2snLCBzYW5zLXNlcmlmOyI+R1VJUkE8L2gxPgogICAgICAgICAgICA8cCBjbGFzcz0idGV4dC1ibHVlLTUwMCB0ZXh0LXhzIHRyYWNraW5nLVswLjJlbV0gZm9udC1ib2xkIHVwcGVyY2FzZSI+U3lzdGVtIEFjY2VzczwvcD4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPGZvcm0gaWQ9ImxvZ2luRm9ybSIgY2xhc3M9InNwYWNlLXktNiIgb25zdWJtaXQ9ImhhbmRsZUxvZ2luKGV2ZW50KSI+CiAgICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgICAgICA8bGFiZWwgY2xhc3M9ImJsb2NrIHRleHQteHMgZm9udC1ib2xkIHRleHQtZ3JheS01MDAgdXBwZXJjYXNlIG1iLTIgbWwtMSIgZm9yPSJ1c2VybmFtZSI+VXNlciBJZGVudGl0eTwvbGFiZWw+CiAgICAgICAgICAgICAgICA8aW5wdXQgCiAgICAgICAgICAgICAgICAgICAgdHlwZT0idGV4dCIgCiAgICAgICAgICAgICAgICAgICAgaWQ9InVzZXJuYW1lIiAKICAgICAgICAgICAgICAgICAgICB2YWx1ZT0iZ3VpcmFfc2FudGlhZ29kZW1vIiAKICAgICAgICAgICAgICAgICAgICBjbGFzcz0idy1mdWxsIGJnLVsjMTIxMjEyXSB0ZXh0LWdyYXktNDAwIGJvcmRlciBib3JkZXItZ3JheS03MDAgcm91bmRlZC1sZyBweC00IHB5LTMgZm9jdXM6b3V0bGluZS1ub25lIGZvY3VzOmJvcmRlci1ibHVlLTUwMCB0cmFuc2l0aW9uLWNvbG9ycyBmb250LW1vbm8gdGV4dC1zbSIKICAgICAgICAgICAgICAgICAgICByZWFkb25seQogICAgICAgICAgICAgICAgPgogICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgICAgICA8bGFiZWwgY2xhc3M9ImJsb2NrIHRleHQteHMgZm9udC1ib2xkIHRleHQtZ3JheS01MDAgdXBwZXJjYXNlIG1iLTIgbWwtMSIgZm9yPSJwYXNzd29yZCI+QWNjZXNzIEtleTwvbGFiZWw+CiAgICAgICAgICAgICAgICA8aW5wdXQgCiAgICAgICAgICAgICAgICAgICAgdHlwZT0icGFzc3dvcmQiIAogICAgICAgICAgICAgICAgICAgIGlkPSJwYXNzd29yZCIgCiAgICAgICAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9IuKAouKAouKAouKAouKAouKAouKAouKAouKAouKAouKAouKAoiIgCiAgICAgICAgICAgICAgICAgICAgY2xhc3M9InctZnVsbCBiZy1bIzEyMTIxMl0gdGV4dC13aGl0ZSBib3JkZXIgYm9yZGVyLWdyYXktNzAwIHJvdW5kZWQtbGcgcHgtNCBweS0zIGZvY3VzOm91dGxpbmUtbm9uZSBmb2N1czpib3JkZXItYmx1ZS01MDAgdHJhbnNpdGlvbi1jb2xvcnMiCiAgICAgICAgICAgICAgICA+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPGRpdiBpZD0iZXJyb3JNc2ciIGNsYXNzPSJoaWRkZW4gZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgdGV4dC1yZWQtNDAwIHRleHQteHMgYmctcmVkLTkwMC8xMCBwLTMgcm91bmRlZCBib3JkZXIgYm9yZGVyLXJlZC05MDAvMzAiPgogICAgICAgICAgICAgICAgPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PGxpbmUgeDE9IjEyIiB4Mj0iMTIiIHkxPSI4IiB5Mj0iMTIiLz48bGluZSB4MT0iMTIiIHgyPSIxMi4wMSIgeTE9IjE2IiB5Mj0iMTYiLz48L3N2Zz4KICAgICAgICAgICAgICAgIDxzcGFuPjxiPkVycm9yOjwvYj4gSW52YWxpZCBjcmVkZW50aWFscyBwcm92aWRlZC4gQWNjZXNzIGRlbmllZC48L3NwYW4+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPGJ1dHRvbiAKICAgICAgICAgICAgICAgIHR5cGU9InN1Ym1pdCIgCiAgICAgICAgICAgICAgICBjbGFzcz0idy1mdWxsIGJnLWJsdWUtNjAwIGhvdmVyOmJnLWJsdWUtNzAwIHRleHQtd2hpdGUgZm9udC1ib2xkIHB5LTMuNSByb3VuZGVkLWxnIHRyYW5zaXRpb24tYWxsIHNoYWRvdy1sZyBzaGFkb3ctYmx1ZS05MDAvMjAgdGV4dC1zbSB1cHBlcmNhc2UgdHJhY2tpbmctd2lkZSIKICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgQXV0aGVudGljYXRlCiAgICAgICAgICAgIDwvYnV0dG9uPgogICAgICAgIDwvZm9ybT4KCiAgICAgICAgPGRpdiBjbGFzcz0ibXQtOCB0ZXh0LWNlbnRlciBzcGFjZS15LTIiPgogICAgICAgICAgICA8cCBjbGFzcz0idGV4dC1bMTBweF0gdGV4dC1ncmF5LTYwMCI+UHJvdGVjdGVkIGJ5IEVESUZZIFNlY3VyaXR5IExheWVyPC9wPgogICAgICAgICAgICA8cCBjbGFzcz0idGV4dC1bMTBweF0gdGV4dC1ncmF5LTcwMCI+SUQ6IDg4MjktWEotU0VDVVJFPC9wPgogICAgICAgIDwvZGl2PgogICAgPC9kaXY+CgogICAgPHNjcmlwdD4KICAgICAgICBmdW5jdGlvbiBoYW5kbGVMb2dpbihlKSB7CiAgICAgICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICAgICAgY29uc3QgZXJyb3JNc2cgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZXJyb3JNc2cnKTsKICAgICAgICAgICAgY29uc3QgcGFzc3dvcmRJbnB1dCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwYXNzd29yZCcpOwogICAgICAgICAgICBjb25zdCBmb3JtQ29udGFpbmVyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcignZGl2Lm1heC13LXNtJyk7IAoKICAgICAgICAgICAgLy8gU2ltdWxhdGUgcHJvY2Vzc2luZwogICAgICAgICAgICBjb25zdCBidG4gPSBlLnRhcmdldC5xdWVyeVNlbGVjdG9yKCdidXR0b24nKTsKICAgICAgICAgICAgY29uc3Qgb3JpZ2luYWxUZXh0ID0gYnRuLmlubmVyVGV4dDsKICAgICAgICAgICAgYnRuLmlubmVyVGV4dCA9ICJWRVJJRllJTkcuLi4iOwogICAgICAgICAgICBidG4uZGlzYWJsZWQgPSB0cnVlOwogICAgICAgICAgICBidG4uY2xhc3NMaXN0LmFkZCgnb3BhY2l0eS03MCcsICdjdXJzb3Itbm90LWFsbG93ZWQnKTsKCiAgICAgICAgICAgIHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgICAgICAgICAgLy8gQWx3YXlzIGZhaWwKICAgICAgICAgICAgICAgIGVycm9yTXNnLmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGRlbicpOwogICAgICAgICAgICAgICAgcGFzc3dvcmRJbnB1dC52YWx1ZSA9ICcnOwogICAgICAgICAgICAgICAgcGFzc3dvcmRJbnB1dC5mb2N1cygpOwogICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAvLyBTaGFrZSBlZmZlY3QKICAgICAgICAgICAgICAgIGZvcm1Db250YWluZXIuY2xhc3NMaXN0LmFkZCgnc2hha2UnKTsKICAgICAgICAgICAgICAgIHNldFRpbWVvdXQoKCkgPT4gZm9ybUNvbnRhaW5lci5jbGFzc0xpc3QucmVtb3ZlKCdzaGFrZScpLCA1MDApOwoKICAgICAgICAgICAgICAgIC8vIFJlc2V0IGJ1dHRvbgogICAgICAgICAgICAgICAgYnRuLmlubmVyVGV4dCA9IG9yaWdpbmFsVGV4dDsKICAgICAgICAgICAgICAgIGJ0bi5kaXNhYmxlZCA9IGZhbHNlOwogICAgICAgICAgICAgICAgYnRuLmNsYXNzTGlzdC5yZW1vdmUoJ29wYWNpdHktNzAnLCAnY3Vyc29yLW5vdC1hbGxvd2VkJyk7CiAgICAgICAgICAgIH0sIDEyMDApOyAvLyAxLjJzIGRlbGF5IGZvciByZWFsaXNtCiAgICAgICAgfQogICAgPC9zY3JpcHQ+CjwvYm9keT4KPC9odG1sPg==";
-            var _dec = atob(_code);
-            document.open();
-            document.write(_dec);
-            document.close();
-            }, 1000);
-        })();
-    </script>
-</body>
-</html>
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare site
+        run: |
+          mkdir _site
+          cp access_portal.html _site/index.html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload the _site directory
+          path: '_site'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
