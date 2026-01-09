@@ -37,6 +37,7 @@ jobs:
         run: |
           mkdir -p _site
           cp access_portal.html _site/index.html
+          cp access_portal.html _site/404.html
           cp access_portal.html _site/access_portal.html
           touch _site/.nojekyll
           ls -R _site
